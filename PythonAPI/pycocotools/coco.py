@@ -45,6 +45,7 @@ __version__ = '2.0'
 # Licensed under the Simplified BSD License [see bsd.txt]
 
 import json
+import math
 import time
 import matplotlib.pyplot as plt
 from matplotlib.collections import PatchCollection
@@ -117,6 +118,7 @@ class COCO:
         self.catToImgs = catToImgs
         self.imgs = imgs
         self.cats = cats
+            
 
     def info(self):
         """
@@ -338,6 +340,17 @@ class COCO:
                 ann['area'] = bb[2]*bb[3]
                 ann['id'] = id+1
                 ann['iscrowd'] = 0
+
+                # calculate the relative size of an object (detection)
+                im = [x for _,x in self.imgs.items() if x['id']==ann['image_id']]
+                assert len(im)==1
+                im=im[0]
+                ann['image_area'] = im['height']*im['width']
+                ann['rel_size'] = math.sqrt(ann['area']/ann['image_area'])*100
+                
+                
+                
+                
         elif 'segmentation' in anns[0]:
             res.dataset['categories'] = copy.deepcopy(self.dataset['categories'])
             for id, ann in enumerate(anns):
