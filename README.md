@@ -12,6 +12,10 @@ Relative threshold values are used for each of them.
 Use the same syntax as with the official cocoapi and the same annotation files. 
 You don't need to change anything.
 
+### Installation
+```console
+pip install git+"https://github.com/koseq/cocoapi.git#egg=pycocotools&subdirectory=PythonAPI"
+```
 
 ### Usage
 ```python
