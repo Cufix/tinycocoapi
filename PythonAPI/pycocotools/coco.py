@@ -95,6 +95,13 @@ class COCO:
         imgToAnns,catToImgs = defaultdict(list),defaultdict(list)
         if 'annotations' in self.dataset:
             for ann in self.dataset['annotations']:
+                # calculate the relative size
+                im = [x for x in self.dataset['images'] if x['id']==ann['image_id']]
+                assert len(im)==1
+                im=im[0]
+                ann['image_area'] = im['height']*im['width']
+                ann['rel_size'] = math.sqrt(ann['area']/ann['image_area'])*100
+                
                 imgToAnns[ann['image_id']].append(ann)
                 anns[ann['id']] = ann
 
