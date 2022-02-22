@@ -247,11 +247,17 @@ class COCOeval:
         if len(gt) == 0 and len(dt) ==0:
             return None
 
+        # for g in gt:
+        #     if g['ignore'] or (g['area']<aRng[0] or g['area']>aRng[1]):
+        #         g['_ignore'] = 1
+        #     else:
+        #         g['_ignore'] = 0
         for g in gt:
-            if g['ignore'] or (g['area']<aRng[0] or g['area']>aRng[1]):
+            if g['ignore'] or (g['rel_size']<aRng[0] or g['rel_size']>aRng[1]):
                 g['_ignore'] = 1
             else:
                 g['_ignore'] = 0
+
 
         # sort dt highest score first, sort gt ignore last
         gtind = np.argsort([g['_ignore'] for g in gt], kind='mergesort')
@@ -295,7 +301,8 @@ class COCOeval:
                     dtm[tind,dind]  = gt[m]['id']
                     gtm[tind,m]     = d['id']
         # set unmatched detections outside of area range to ignore
-        a = np.array([d['area']<aRng[0] or d['area']>aRng[1] for d in dt]).reshape((1, len(dt)))
+        a = np.array([d['rel_size']<aRng[0] or d['rel_size']>aRng[1] for d in dt]).reshape((1, len(dt)))
+        # a = np.array([d['area']<aRng[0] or d['area']>aRng[1] for d in dt]).reshape((1, len(dt)))
         dtIg = np.logical_or(dtIg, np.logical_and(dtm==0, np.repeat(a,T,0)))
         # store results for given image and category
         return {
@@ -456,20 +463,41 @@ class COCOeval:
             print(iStr.format(titleStr, typeStr, iouStr, areaRng, maxDets, mean_s))
             return mean_s
         def _summarizeDets():
-            stats = np.zeros((12,))
+            stats = np.zeros((18,))
             stats[0] = _summarize(1)
             stats[1] = _summarize(1, iouThr=.5, maxDets=self.params.maxDets[2])
             stats[2] = _summarize(1, iouThr=.75, maxDets=self.params.maxDets[2])
-            stats[3] = _summarize(1, areaRng='small', maxDets=self.params.maxDets[2])
-            stats[4] = _summarize(1, areaRng='medium', maxDets=self.params.maxDets[2])
-            stats[5] = _summarize(1, areaRng='large', maxDets=self.params.maxDets[2])
-            stats[6] = _summarize(0, maxDets=self.params.maxDets[0])
-            stats[7] = _summarize(0, maxDets=self.params.maxDets[1])
-            stats[8] = _summarize(0, maxDets=self.params.maxDets[2])
-            stats[9] = _summarize(0, areaRng='small', maxDets=self.params.maxDets[2])
-            stats[10] = _summarize(0, areaRng='medium', maxDets=self.params.maxDets[2])
-            stats[11] = _summarize(0, areaRng='large', maxDets=self.params.maxDets[2])
+            stats[3] = _summarize(1, areaRng='micro', maxDets=self.params.maxDets[2])
+            stats[4] = _summarize(1, areaRng='v-tiny', maxDets=self.params.maxDets[2])
+            stats[5] = _summarize(1, areaRng='tiny', maxDets=self.params.maxDets[2])
+            stats[6] = _summarize(1, areaRng='small', maxDets=self.params.maxDets[2])
+            stats[7] = _summarize(1, areaRng='medium', maxDets=self.params.maxDets[2])
+            stats[8] = _summarize(1, areaRng='large', maxDets=self.params.maxDets[2])
+            stats[9] = _summarize(0, maxDets=self.params.maxDets[0])
+            stats[10] = _summarize(0, maxDets=self.params.maxDets[1])
+            stats[11] = _summarize(0, maxDets=self.params.maxDets[2])
+            stats[12] = _summarize(0, areaRng='micro', maxDets=self.params.maxDets[2])
+            stats[13] = _summarize(0, areaRng='v-tiny', maxDets=self.params.maxDets[2])
+            stats[14] = _summarize(0, areaRng='tiny', maxDets=self.params.maxDets[2])
+            stats[15] = _summarize(0, areaRng='small', maxDets=self.params.maxDets[2])
+            stats[16] = _summarize(0, areaRng='medium', maxDets=self.params.maxDets[2])
+            stats[17] = _summarize(0, areaRng='large', maxDets=self.params.maxDets[2])
             return stats
+        # def _summarizeDets():
+        #     stats = np.zeros((12,))
+        #     stats[0] = _summarize(1)
+        #     stats[1] = _summarize(1, iouThr=.5, maxDets=self.params.maxDets[2])
+        #     stats[2] = _summarize(1, iouThr=.75, maxDets=self.params.maxDets[2])
+        #     stats[3] = _summarize(1, areaRng='small', maxDets=self.params.maxDets[2])
+        #     stats[4] = _summarize(1, areaRng='medium', maxDets=self.params.maxDets[2])
+        #     stats[5] = _summarize(1, areaRng='large', maxDets=self.params.maxDets[2])
+        #     stats[6] = _summarize(0, maxDets=self.params.maxDets[0])
+        #     stats[7] = _summarize(0, maxDets=self.params.maxDets[1])
+        #     stats[8] = _summarize(0, maxDets=self.params.maxDets[2])
+        #     stats[9] = _summarize(0, areaRng='small', maxDets=self.params.maxDets[2])
+        #     stats[10] = _summarize(0, areaRng='medium', maxDets=self.params.maxDets[2])
+        #     stats[11] = _summarize(0, areaRng='large', maxDets=self.params.maxDets[2])
+        #     return stats
         def _summarizeKps():
             stats = np.zeros((10,))
             stats[0] = _summarize(1, maxDets=20)
@@ -506,8 +534,12 @@ class Params:
         self.iouThrs = np.linspace(.5, 0.95, int(np.round((0.95 - .5) / .05)) + 1, endpoint=True)
         self.recThrs = np.linspace(.0, 1.00, int(np.round((1.00 - .0) / .01)) + 1, endpoint=True)
         self.maxDets = [1, 10, 100]
-        self.areaRng = [[0 ** 2, 1e5 ** 2], [0 ** 2, 32 ** 2], [32 ** 2, 96 ** 2], [96 ** 2, 1e5 ** 2]]
-        self.areaRngLbl = ['all', 'small', 'medium', 'large']
+        # self.areaRng = [[0 ** 2, 1e5 ** 2], [0 ** 2, 32 ** 2], [32 ** 2, 96 ** 2], [96 ** 2, 1e5 ** 2]]
+        # self.areaRngLbl = ['all', 'small', 'medium', 'large']
+        self.areaRng = [[0, 100], [0, 0.38096593373484317], [0.38096593373484317, 1.5238637349393727],  
+                        [1.5238637349393727, 3.0477274698787453], [3.0477274698787453, 6.095454939757491], 
+                        [6.095454939757491, 18.28636481927247], [18.28636481927247, 100]]
+        self.areaRngLbl = ['all', 'micro', 'v-tiny', 'tiny', 'small', 'medium', 'large']
         self.useCats = 1
 
     def setKpParams(self):
