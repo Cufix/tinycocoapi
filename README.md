@@ -14,7 +14,7 @@ You don't need to change anything.
 
 ### Installation
 ```console
-pip install git+"https://github.com/koseq/cocoapi.git#egg=pycocotools&subdirectory=PythonAPI"
+pip install git+"https://github.com/koseq/tinycocoapi.git#egg=pycocotools&subdirectory=PythonAPI"
 ```
 
 ### Usage
