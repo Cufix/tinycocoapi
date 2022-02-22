@@ -19,6 +19,12 @@ pip install git+"https://github.com/koseq/cocoapi.git#egg=pycocotools&subdirecto
 
 ### Usage
 ```python
+from pycocotools.coco import COCO
+from pycocotools.cocoeval import COCOeval
+
+gt_path = "path_to_gt.json"
+res_path = "path_to_your_detections.json"
+
 cocoGt = COCO(gt_path)
 cocoDt = cocoGt.loadRes(res_path)
 imgIds = sorted(cocoGt.getImgIds())
