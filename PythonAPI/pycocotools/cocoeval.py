@@ -578,9 +578,9 @@ class Params:
         self.useCats = 1
         self.kpt_oks_sigmas = np.array([.26, .25, .25, .35, .35, .79, .79, .72, .72, .62,.62, 1.07, 1.07, .87, .87, .89, .89])/10.0
 
-    def __init__(self, iouType='segm', maxDets=[1, 10, 100]):
+    def __init__(self, iouType='segm', maxDets=[1, 10, 100], iouThr=None):
         if iouType == 'segm' or iouType == 'bbox':
-            self.setDetParams(maxDets)
+            self.setDetParams(maxDets, iouThr=iouThr)
         elif iouType == 'keypoints':
             self.setKpParams()
         else:
