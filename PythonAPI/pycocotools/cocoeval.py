@@ -57,7 +57,7 @@ class COCOeval:
     # Data, paper, and tutorials available at:  http://mscoco.org/
     # Code written by Piotr Dollar and Tsung-Yi Lin, 2015.
     # Licensed under the Simplified BSD License [see coco/license.txt]
-    def __init__(self, cocoGt=None, cocoDt=None, iouType='segm', maxDets=[1, 10, 100]):
+    def __init__(self, cocoGt=None, cocoDt=None, iouType='segm', maxDets=[1, 10, 100], iouThr=None):
         '''
         Initialize CocoEval using coco APIs for gt and dt
         :param cocoGt: coco object with ground truth annotations
@@ -72,7 +72,7 @@ class COCOeval:
         self.eval     = {}                  # accumulated evaluation results
         self._gts = defaultdict(list)       # gt for evaluation
         self._dts = defaultdict(list)       # dt for evaluation
-        self.params = Params(iouType=iouType, maxDets=maxDets) # parameters
+        self.params = Params(iouType=iouType, maxDets=maxDets, iouThr=iouThr) # parameters
         self._paramsEval = {}               # parameters for evaluation
         self.stats = []                     # result summarization
         self.ious = {}                      # ious between all gts and dts
@@ -465,22 +465,22 @@ class COCOeval:
         def _summarizeDets():
             if len(self.params.maxDets)==1:
                 stats = np.zeros((16,))
-                stats[0] = _summarize(1)
+                stats[0] = _summarize(1, maxDets=self.params.maxDets[-1])
                 stats[1] = _summarize(1, iouThr=.5, maxDets=self.params.maxDets[-1])
                 stats[2] = _summarize(1, iouThr=.75, maxDets=self.params.maxDets[-1])
-                stats[3] = _summarize(1, areaRng='micro', maxDets=self.params.maxDets[-1])
-                stats[4] = _summarize(1, areaRng='v-tiny', maxDets=self.params.maxDets[-1])
-                stats[5] = _summarize(1, areaRng='tiny', maxDets=self.params.maxDets[-1])
-                stats[6] = _summarize(1, areaRng='small', maxDets=self.params.maxDets[-1])
-                stats[7] = _summarize(1, areaRng='medium', maxDets=self.params.maxDets[-1])
-                stats[8] = _summarize(1, areaRng='large', maxDets=self.params.maxDets[-1])
-                stats[9] = _summarize(0, maxDets=self.params.maxDets[-1])
-                stats[10] = _summarize(0, areaRng='micro', maxDets=self.params.maxDets[-1])
-                stats[11] = _summarize(0, areaRng='v-tiny', maxDets=self.params.maxDets[-1])
-                stats[12] = _summarize(0, areaRng='tiny', maxDets=self.params.maxDets[-1])
-                stats[13] = _summarize(0, areaRng='small', maxDets=self.params.maxDets[-1])
-                stats[14] = _summarize(0, areaRng='medium', maxDets=self.params.maxDets[-1])
-                stats[15] = _summarize(0, areaRng='large', maxDets=self.params.maxDets[-1])
+                stats[3] = _summarize(1, areaRng='micro', maxDets=self.params.maxDets[-1], iouThr=self.params.iouThr)
+                stats[4] = _summarize(1, areaRng='v-tiny', maxDets=self.params.maxDets[-1], iouThr=self.params.iouThr)
+                stats[5] = _summarize(1, areaRng='tiny', maxDets=self.params.maxDets[-1], iouThr=self.params.iouThr)
+                stats[6] = _summarize(1, areaRng='small', maxDets=self.params.maxDets[-1], iouThr=self.params.iouThr)
+                stats[7] = _summarize(1, areaRng='medium', maxDets=self.params.maxDets[-1], iouThr=self.params.iouThr)
+                stats[8] = _summarize(1, areaRng='large', maxDets=self.params.maxDets[-1], iouThr=self.params.iouThr)
+                stats[9] = _summarize(0, maxDets=self.params.maxDets[-1], iouThr=self.params.iouThr)
+                stats[10] = _summarize(0, areaRng='micro', maxDets=self.params.maxDets[-1], iouThr=self.params.iouThr)
+                stats[11] = _summarize(0, areaRng='v-tiny', maxDets=self.params.maxDets[-1], iouThr=self.params.iouThr)
+                stats[12] = _summarize(0, areaRng='tiny', maxDets=self.params.maxDets[-1], iouThr=self.params.iouThr)
+                stats[13] = _summarize(0, areaRng='small', maxDets=self.params.maxDets[-1], iouThr=self.params.iouThr)
+                stats[14] = _summarize(0, areaRng='medium', maxDets=self.params.maxDets[-1], iouThr=self.params.iouThr)
+                stats[15] = _summarize(0, areaRng='large', maxDets=self.params.maxDets[-1], iouThr=self.params.iouThr)
                 return stats
             elif len(self.params.maxDets)==3:
                 stats = np.zeros((18,))
@@ -550,13 +550,14 @@ class Params:
     '''
     Params for coco evaluation api
     '''
-    def setDetParams(self, maxDets=[1, 10, 100]):
+    def setDetParams(self, maxDets=[1, 10, 100], iouThr=None):
         self.imgIds = []
         self.catIds = []
         # np.arange causes trouble.  the data point on arange is slightly larger than the true value
         self.iouThrs = np.linspace(.5, 0.95, int(np.round((0.95 - .5) / .05)) + 1, endpoint=True)
         self.recThrs = np.linspace(.0, 1.00, int(np.round((1.00 - .0) / .01)) + 1, endpoint=True)
         self.maxDets = maxDets #[1, 10, 100]
+        self.iouThr = iouThr
         # self.areaRng = [[0 ** 2, 1e5 ** 2], [0 ** 2, 32 ** 2], [32 ** 2, 96 ** 2], [96 ** 2, 1e5 ** 2]]
         # self.areaRngLbl = ['all', 'small', 'medium', 'large']
         self.areaRng = [[0, 100], [0, 0.38096593373484317], [0.38096593373484317, 1.5238637349393727],  
